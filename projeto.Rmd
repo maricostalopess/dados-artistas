@@ -301,5 +301,13 @@ ggplot(cluster3, aes(x = reorder(artista, -insta), y = `insta`, fill = gênero))
 
 Levando em conta o conhecimento da Universal quanto ao seu público, sabe-se que as pessoas que consomem as músicas dos artistas desse cluster não são as mais suscetíveis a campanham em mídias sociais, caracteríticas mais atribuídas aos Millenials e Gen Z. Portanto, a recomendação gerencial nesse caso seria a de não investir nesses artistas. Levando em conta o grafo anterior, de qualquer maneira seria difícil escolher qual artista patrocinar pois os dois subgrupos são bem distintos em questão de tamanho no Instagram, o que significa que não seria possível atingir os artistas maiores com algum artista menor e mais barato pois nesse caso eles não estão correlacionados.
 
+<br><br>
 
+### Divulgação de IA
+O Chat GPT foi consultado em duas partes principais: <br>
+  1- Formatação do grafo e dos gráficos em relação a cores dos nós/barras, cores e tamanho das fontes das letras e tamanho dos nós. <br>
+  2- Extração dos dados da Deezer API. Ele me ensinou a usar a plataforma, fez o código e me ensinou a colocar em prática
 
+<br>
+
+<br>
