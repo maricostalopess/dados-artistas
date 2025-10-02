@@ -22,3 +22,6 @@ Pacotes utilizados:
 - ggplot2
 - igraph
 - ggraph
+
+## Intruções
+Mudar o diretório que está no código com a função setwd( ) antes de rodar o código.
