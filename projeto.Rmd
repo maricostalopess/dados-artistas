@@ -39,16 +39,20 @@ Apesar das fontes de ouvintes mensais e de artistas correlacionados serem difere
 <br> <br>
 
 ### Glossário de Variáveis
-- ***artistas*** é a variável que refere-se aos artistas mais buscados na aba de pesquisa da Universal Music Store. Para entender as possíveis estratégias a serem usadas para expandir o e-commerce é interessante que analise-se os mais populares no site de merchandising, mais do que os maiores na indústria da música em si;
-- ***correlacao_1*** a ***correlacao_20*** são as variáveis que, como mencionado antes, referem-se aos artistas que costumam também ser escutados pelo mesmo público do artista principal da amostra, em ordem decrescente (correlacao_1 é a correlação mais forte e correlacao_20 a mais fraca);
-- ***insta*** é a coluna que contém os valores do número de seguidores dos artistas no Instagram. No caso das bandas, a conta considerada foi a do grupo;
-- ***gênero*** contém informações sobre o gênero prodominante de cada artista da coluna principal;
-- ***ouvintes_mensais*** são os dados disponíveis no Spotify sobre a quantidade de ouvintes mensais de cada artista.
+<ul style="text-align: justify;">
+  <li>***artistas*** é a variável que refere-se aos artistas mais buscados na aba de pesquisa da Universal Music Store. Para entender as possíveis estratégias a serem usadas para expandir o e-commerce é interessante que analise-se os mais populares no site de merchandising, mais do que os maiores na indústria da música em si;</li>
+  <li>***correlacao_1*** a ***correlacao_20*** são as variáveis que, como mencionado antes, referem-se aos artistas que costumam também ser escutados pelo mesmo público do artista principal da amostra, em ordem decrescente (correlacao_1 é a correlação mais forte e correlacao_20 a mais fraca);</li>
+  <li>***insta*** é a coluna que contém os valores do número de seguidores dos artistas no Instagram. No caso das bandas, a conta considerada foi a do grupo;</li>
+  <li>***gênero*** contém informações sobre o gênero prodominante de cada artista da coluna principal;</li>
+  <li>***ouvintes_mensais*** são os dados disponíveis no Spotify sobre a quantidade de ouvintes mensais de cada artista.</li>
+</ul>
 
 <br><br>
 
 ## Limpeza e Manipulação de Dados
+<p style="text-align: justify;">
 O problema incial foi que os dados não estavam no formato correto de data frame uma vez que a primeira linha continha todos os principais artistas e as linhas seguintes continham as informações não numéricas conforme a coluna do artista correspondente. Ou seja, cada coluna represetava uma amostra, e não cada linha como deveria ser. Portanto não era possível adicionar dados numéricos já que em cada coluna só se pode ser um tipo de dado. Além disso, o programa estava reconhecendo como se o nome de cada coluna fosse o imput do primeiro artista e isso estava distorcendo as reais dimensões do dataframe. Por isso o col_names = FALSE
+</p>
 
 ```{r, results='hide'}
 dados <- read_csv("artistas_relacionados.csv", col_names = FALSE)
@@ -58,7 +62,9 @@ dados <- read_csv("artistas_relacionados.csv", col_names = FALSE)
 knitr::kable(head(dados, 5))
 ```
 
+<p style="text-align: justify;">
 Com isso eu decidi criar um data frame a partir da matriz transposta da base inicial para corrigir o formato. A partir disso cada linha passou a corresponder a uma amostra (um artista) e cada coluna uma variável.
+</p>
 
 ```{r, results='hide'}
 dadost <- as.data.frame(t(dados))
@@ -76,7 +82,10 @@ names(dadost) <- c("artista", "correlacao_1", "correlacao_2", "correlacao_3", "c
 ```
 
 <br><br>
+
+<p style="text-align: justify;">
 Como pode-se ver abaixo o dado ficou organizado de modo que eu pudesse adicionar colunas com outros tipos de variáveis:
+</p>
 
 ```{r,echo=FALSE}
 knitr::kable(head(dadost, 5))
@@ -86,8 +95,9 @@ knitr::kable(head(dadost, 5))
 dadost <- dadost[-40, ]
 ```
 
-
+<p style="text-align: justify;">
 Depois isso, integrei a base que continha informações sobre dados de seguidores (insta.xlsx) e a que tinha dados sobre gênero musical e ouvintes (genouv.xlsx) usando leftjoin (mais indicado) ou simplesmente "imputando" uma base na outra.
+</p>
 
 ```{r, results='hide'}
 setwd("/Users/marianalopes/Downloads")
@@ -128,7 +138,9 @@ A minha ideia de grafo levava em consideração que os gestores do meu projeto n
 Abaixo explico o que cada parte da formatação do grafo significa.
 </p>
 
+<p style="text-align: justify;">
 **1) Edges**: Foram criados os edges para representar as conexões entre artistas, partindo da primeira coluna da base como origem e das demais colunas como destinos. Em seguida, essas relações foram organizadas em uma tabela de arestas, com a remoção dos valores ausentes, e depois todos os nomes que apareciam como origem ou destino foram reunidos em uma lista única de artistas que compõem o grafo:
+</p>
 ```{r, results='hide'}
 # 1) Edges
 from <- dadost[[1]]
@@ -142,14 +154,18 @@ edges <- data.frame(
 ```
 <br><br>
 
+<p style="text-align: justify;">
 **2) Lista de artistas**: Foi criada uma lista completa de artistas a partir da união de todos que apareciam como origem e destino nas conexões, e em seguida foi utilizada a função unique( ) para garantir que cada artista aparecesse apenas uma vez nessa lista:
+</p>
 ```{r, results='hide'}
 # 2) Lista de artistas
 todos_artistas <- unique(c(edges$from, edges$to))
 ```
 <br><br>
 
+<p style="text-align: justify;">
 **3) Nodes**: Foram criados os nós para representar cada artista do grafo, organizados em um data frame com seus atributos. Primeiro, a lista completa de artistas foi associada às informações da base original (gênero e ouvintes mensais). Em seguida, os casos ausentes foram tratados: quando o gênero musical não estava definido, recebeu a categoria “Desconhecido”, e quando o número de ouvintes não existia, foi atribuído o valor padrão de 1000. Isso não distorceu as informações substanciais do grafo porque os únicos artistas que não continham esses dados eram os que faziam parte das colunas **correlacao_1** a **correlacao_20*, portanto é até mesmo um modo interessante de verificar quais cantores não fazem parte da lista principal dos mais buscados na Universal Music Store. Por fim, foi definido um atributo extra chamado font_size, que ajusta o tamanho da fonte de acordo com a popularidade do artista — maior para quem tem mais de 90 milhões de ouvintes. Isso porque em circunferência maiores não há necessidade de manter a fonte tão pequena para visualizar o nome do artista, uma vez que nesse caso letras maiores não prejudicam a visibilidade dos nós da redondeza, como acontece no caso das circunferências muito pequenas:
+</p>
 ```{r, results='hide'}
 # 3) Nodes com atributos
 nodes <- data.frame(name = todos_artistas) %>%
@@ -163,16 +179,21 @@ nodes <- data.frame(name = todos_artistas) %>%
     font_size = ifelse(`ouvintes mensais` > 9.0e+07, 3, 2.2)
   )
 ```
+
 <br><br>
 
+<p style="text-align: justify;">
 **4) Grafo inicial**: O grafo inicial é criado para estruturar a rede básica de conexões entre os artistas, utilizando as arestas e os nós já preparados. Esse passo serve como uma primeira representação da rede, que permite verificar se os dados foram corretamente organizados e se o grafo está funcional. Ele é um ponto de partida geral, enquanto as recriações permitem gerar versões mais específicas e refinadas conforme a análise desejada:
+</p>
 ```{r, results='hide'}
 # 4) Grafo inicial
 g <- graph_from_data_frame(edges, vertices = nodes, directed = FALSE)
 ```
 <br><br>
 
+<p style="text-align: justify;">
 **5) Paleta**: Foi definida uma paleta de cores para identificar os gêneros musicais no grafo conforme a estética da Universal Music, atribuindo uma cor específica a cada estilo e agrupando gêneros semelhantes com a mesma tonalidade:
+</p>
 ```{r, results='hide'}
 # 5) Paleta
 paleta <- c(
@@ -190,7 +211,9 @@ paleta <- c(
 ```
 <br><br>
 
+<p style="text-align: justify;">
 **6) Pesos das arestas**: Foram atribuídos pesos às arestas do grafo para controlar a força das conexões. As ligações entre artistas de gênero Pop com outros também Pop receberam um peso extremamente baixo tornando-as muito mais fracas, enquanto todas as demais conexões mantiveram peso igual a 1. O motivo disso foi porque os artistas Pop tinham circunferências de nós grandes e em geral eram muito correlacionados entre si (várias conexões em comum). Isso fazia com que os nós ficassem muito próximos, o que causava confusão e pouca legibilidade ou interpretabilidade do grafo:
+</p>
 ```{r, results='hide'}
 # 6) Pesos das arestas
 edges <- edges %>%
@@ -202,14 +225,18 @@ edges <- edges %>%
 ```
 <br><br>
 
+<p style="text-align: justify;">
 **7) Recriar grafo**: O grafo foi recriado incorporando agora os pesos definidos nas arestas, de modo que as conexões entre os artistas passem a refletir não apenas a existência da relação, mas também a intensidade dela:
+</p>
 ```{r, results='hide'}
 # 7) Recriar grafo
 g <- graph_from_data_frame(edges %>% select(from, to, weight), vertices = nodes, directed = FALSE)
 ```
 <br><br>
 
+<p style="text-align: justify;">
 **8) Layout**: Foi definido um layout para posicionar os artistas no grafo, controlando o afastamento entre eles de acordo com o número de nós, os pesos das conexões e um parâmetro de repulsão que evita sobreposição:
+</p>
 ```{r, results='hide'}
 # 8) Layout
 set.seed(123)
@@ -224,8 +251,10 @@ coords <- layout_with_fr(
 ```
 <br><br>
 
+<p style="text-align: justify;">
 **9) Plot**: Foi feito o plot do grafo utilizando as coordenadas já definidas. As conexões foram desenhadas em laranja, enquanto cada artista aparece como um ponto cujo tamanho reflete o número de ouvintes mensais e cuja cor indica o gênero, conforme a paleta criada. Os nomes dos artistas foram adicionados em fonte preta, e o gráfico foi formatado com tema limpo e legenda posicionada na parte inferior:
-```{r}
+</p>
+```{r, fig.width=30, fig.height=25}
 # 9) Plot
 ggraph(g, layout = "manual", x = coords[,1], y = coords[,2]) + 
   geom_edge_link(colour = "orange", alpha = 0.8) +
@@ -239,22 +268,32 @@ ggraph(g, layout = "manual", x = coords[,1], y = coords[,2]) +
   theme(legend.position = "bottom")
 ```
 
+<p style="text-align: justify;">
 OBS.: Para melhor visualização do grafo recomendo baixar o arquivo disponível na pasta "/grafo" no repositório.
+</p>
 
+<p style="text-align: justify;">
 O grafo mostra as diferentes correlações entre artistas. É interessante perceber que existem nós em comum e que assim como alguns artistas principais estão correlados entre si diretamente, existem casos nos quais artistas/nós intermediários ligam diferentes artistas principais. Além disso, podemos ver que existe um padrão de gênero musical na correlação. Por exemplo, todos os artistas de R&B são correlacionados com os de pop internacional. Outros padrões foram levadas em consideração para formar os Clusters 1, 2 e 3, cujos gráficos de barras de seguidores no Instagram são analisados na próxima seção.
+</p>
 
 <br><br>
 
 ## Gráfico de Barras
-É nessa seção que serão comparados os números de seguidores de cada artista no Instagram conforme o agrupamento feito de maneira exploratória a partir do grafo anterior. O principal critério de decisão foi as ligações entre os nós e de maneira secundária foi levado em conta o gênero musical de cada artista. Isso é relevante porque pode-se estimar o custo de patrocínio de cada artista em suas redes. A partir disso, entendendo quais artistas são mais correlacionados entre si, é possível encontrar métodos indiretos de atingir públicos maiores e, assim, aumentar o interesse do público pelos produtos da Universal e impulsionar as vendas no e-commerce.
 
+<p style="text-align: justify;">
+É nessa seção que serão comparados os números de seguidores de cada artista no Instagram conforme o agrupamento feito de maneira exploratória a partir do grafo anterior. O principal critério de decisão foi as ligações entre os nós e de maneira secundária foi levado em conta o gênero musical de cada artista. Isso é relevante porque pode-se estimar o custo de patrocínio de cada artista em suas redes. A partir disso, entendendo quais artistas são mais correlacionados entre si, é possível encontrar métodos indiretos de atingir públicos maiores e, assim, aumentar o interesse do público pelos produtos da Universal e impulsionar as vendas no e-commerce.
+</p>
 
 ```{r,include=FALSE}
 dadost[dadost$artista == "Rihanna", "insta"] <- 149000000
 ```
 
-**Cluster 1**: É o grupo composto de artistas pop internacionais e todos os R&B da base. Quando se analisa o grafo anterior esse é o cluster mais nítido pois todos os artistas estão correlacionados entre si de alguma maneira. <br>
+<p style="text-align: justify;">
+**Cluster 1**: É o grupo composto de artistas pop internacionais e todos os R&B da base. Quando se analisa o grafo anterior esse é o cluster mais nítido pois todos os artistas estão correlacionados entre si de alguma maneira.
+</p>
+<p style="text-align: justify;">
 O interessante desse cluster é que ele possui uma banda de rock ("Imagine Dragons") que não tem correlação com nenhuma outra banda do mesmo gênero mas que curiosamente tem algumas diferentes correlações com artistas Pop. Nisso vemos que o comportamento do consumidor não varia apenas com base em gênero mas também conforme outros fatores que influenciam suas percepções.
+</p>
 ```{r, results='hide'}
 cluster1 <- dadost %>% filter(artista %in% c("Ariana Grande", "Billie Eilish", "Camila Cabello",
                                              "Chappell Roan", "Demi Lovato", "Doechii", 
@@ -272,10 +311,14 @@ ggplot(cluster1, aes(x = reorder(artista, -insta), y = `insta`, fill = gênero))
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+<p style="text-align: justify;">
 A interpretação gerencial é que, se caso seja concluído que o público que consome o conteúdo artístico e midiático desses artistas é suscetível a campanhas de marketing no Instagram, por exemplo, seria recomendado investir em "publis" nos perfis da Gracie Abrams, da Doechii ou Chappell Roan. Isso porque essas são as artistas que possuem menos seguidores na rede logo são mais baratas de custear campanhas e ainda assim públicos de artistas maiores seriam atingidos. Para a decisão final deveria-se analisar mais aprofundamente quais das três artistas têm mais influência e poder de convencimento no Instagram.
+</p>
 <br><br>
 
+<p style="text-align: justify;">
 **Cluster 2**: É o grupo composto de artistas que em sua maioria não são correlacionados entre si mas que fazem parte do mesmo gênero musical.
+</p>
 ```{r, results='hide'}
 cluster2 <- dadost %>% filter(artista %in% c("Anitta", "BLACKPINK", "BTS", "Carol Biazin", 
                                              "DUDA BEAT", "Jão", "RBD"))
@@ -288,10 +331,14 @@ ggplot(cluster2, aes(x = reorder(artista, -insta), y = `insta`, fill = gênero))
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+<p style="text-align: justify;">
 Nesse caso já que nem todos os artistas não são correlacionados entre si mesmo que façam parte do mesmo gênero Pop, deveria-se focar nos com menor seguidores (= menor custo para campanha) que têm correlação com artistas grandes. A única artista grande desse grupo que tem correlação com outros do cluster é a Anitta e esses cantores menores interessantes para uma campanha seriam Duda Beat, Carol Biazin. O Jão apesar de provavelmente ser barato de custear ele não tem uma correlação direta com a Anitta, apenas indireta, diferentemente das outras contoras.
+</p>
 <br><br>
 
+<p style="text-align: justify;">
 **Cluster 3**: Esse é o cluster do rock (com exceção de Imagine Dragons), do MPB, do Pagode/Samba e do Reggae. Gêneros que parecem não fazer sentido entre si mas que quando analisadas as datas do auge dos artistas e o local de sucesso faz bastante sentido. Esse cluster na realidade une 2 grupos e 2 artistas isolados: um grupo de rock brasileiro e MPB, outro de rock internacional e heavy metal, um artista de pagode/samba que não tem correlações (Zeca Pagodinho) e um de Reggae (Bob Marley). Idealmente esse deveria ser dividido em mais de um cluster mas priorizei a simplificação de análise já que esses sub grupos compartilham similaridade da faixa etária do público que consome e também gêneros similares.
+</p>
 
 ```{r, results='hide'}
 cluster3 <- dadost %>% filter(artista %in% c("Bob Marley & The Wailers", "Charlie Brown Jr.",
@@ -308,14 +355,23 @@ ggplot(cluster3, aes(x = reorder(artista, -insta), y = `insta`, fill = gênero))
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+<p style="text-align: justify;">
 Levando em conta o conhecimento da Universal quanto ao seu público, sabe-se que as pessoas que consomem as músicas dos artistas desse cluster não são as mais suscetíveis a campanham em mídias sociais, caracteríticas mais atribuídas aos Millenials e Gen Z. Portanto, a recomendação gerencial nesse caso seria a de não investir em campanhas no Instagram desses artistas. Levando em conta o gráfico anterior, de qualquer maneira seria difícil escolher qual artista patrocinar pois os dois subgrupos são bem distintos em questão de tamanho no Instagram, o que significa que não seria possível atingir os artistas maiores com algum artista menor e mais barato pois nesse caso eles não estão correlacionados.
+</p>
 
 <br><br>
 
 ### Divulgação de IA
-O Chat GPT foi consultado em duas partes principais: <br>
+
+<p style="text-align: justify;">
+O Chat GPT foi consultado em duas partes principais:
+</p>
+<p style="text-align: justify;">
   1- Formatação do grafo e dos gráficos em relação a cores dos nós e das barras, cores e tamanho das fontes das letras e tamanho dos nós. <br>
+</p>
+<p style="text-align: justify;">
   2- Extração dos dados da Deezer API. Ele me ensinou a usar a plataforma, fez o código e me ensinou a colocar em prática.
+</p>
 
 <br>
 
